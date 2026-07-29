@@ -1,330 +1,171 @@
-// ===============================
-// BRICK BREAKER - SCRIPT.JS BAGIAN 1
-// ===============================
-
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
-// Informasi Game
-const scoreText = document.getElementById("score");
-const levelText = document.getElementById("level");
-const timerText = document.getElementById("timer");
-const message = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
+const scoreEl = document.getElementById("score");
 
-// Audio
-const hitSound = document.getElementById("hitSound");
-const winSound = document.getElementById("winSound");
-const loseSound = document.getElementById("loseSound");
-
-// Variabel
+// Properti Game
 let score = 0;
-let level = 1;
-let time = 60;
 let gameRunning = false;
 
 // Bola
-let ball = {
-    x: 400,
-    y: 250,
-    radius: 10,
+const ball = {
+    x: canvas.width / 2,
+    y: canvas.height - 30,
     dx: 4,
-    dy: -4
+    dy: -4,
+    radius: 10
 };
 
-// Paddle Player
-let paddle = {
-    width: 120,
+// Pemukul (Paddle)
+const paddle = {
+    width: 100,
     height: 15,
-    x: 340,
-    y: 470,
-    speed: 8
+    x: (canvas.width - 100) / 2,
+    speed: 7,
+    dx: 0
 };
 
-// Paddle AI
-let ai = {
-    width: 120,
-    height: 15,
-    x: 340,
-    y: 15,
-    speed: 4
-};
-
-// Tombol keyboard
-let rightPressed = false;
-let leftPressed = false;
-
-document.addEventListener("keydown", function(e){
-    if(e.key=="ArrowRight") rightPressed=true;
-    if(e.key=="ArrowLeft") leftPressed=true;
-});
-
-document.addEventListener("keyup", function(e){
-    if(e.key=="ArrowRight") rightPressed=false;
-    if(e.key=="ArrowLeft") leftPressed=false;
-});
-
-// Data Balok
-const rowCount = 5;
-const colCount = 8;
-const brickWidth = 80;
+// Bata (Bricks)
+const brickRowCount = 4;
+const brickColumnCount = 8;
+const brickWidth = 85;
 const brickHeight = 20;
 const brickPadding = 10;
-const brickOffsetTop = 60;
-const brickOffsetLeft = 35;
+const brickOffsetTop = 30;
+const brickOffsetLeft = 25;
 
 let bricks = [];
-
-for(let c=0;c<colCount;c++){
-    bricks[c]=[];
-
-    for(let r=0;r<rowCount;r++){
-        bricks[c][r]={
-            x:0,
-            y:0,
-            status:1
-        };
-    }
-}
-
-// Gambar Balok
-function drawBricks(){
-
-    for(let c=0;c<colCount;c++){
-
-        for(let r=0;r<rowCount;r++){
-
-            if(bricks[c][r].status==1){
-
-                let brickX=(c*(brickWidth+brickPadding))+brickOffsetLeft;
-                let brickY=(r*(brickHeight+brickPadding))+brickOffsetTop;
-
-                bricks[c][r].x=brickX;
-                bricks[c][r].y=brickY;
-
-                ctx.fillStyle="#FFD700";
-                ctx.fillRect(
-                    brickX,
-                    brickY,
-                    brickWidth,
-                    brickHeight
-                );
-            }
-
+function createBricks() {
+    bricks = [];
+    for (let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (let r = 0; r < brickRowCount; r++) {
+            bricks[c][r] = { x: 0, y: 0, status: 1 };
         }
-
     }
-
 }
 
-// Gambar Bola
-function drawBall(){
+// Kontrol Keyboard
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Right" || e.key === "ArrowRight") paddle.dx = paddle.speed;
+    else if (e.key === "Left" || e.key === "ArrowLeft") paddle.dx = -paddle.speed;
+});
 
+document.addEventListener("keyup", (e) => {
+    if (e.key === "Right" || e.key === "ArrowRight" || e.key === "Left" || e.key === "ArrowLeft") {
+        paddle.dx = 0;
+    }
+});
+
+// Menggambar Objek
+function drawBall() {
     ctx.beginPath();
-    ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2);
-    ctx.fillStyle="white";
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#e94560";
     ctx.fill();
     ctx.closePath();
-
 }
 
-// Gambar Paddle
-function drawPaddle(){
-
-    ctx.fillStyle="cyan";
-    ctx.fillRect(
-        paddle.x,
-        paddle.y,
-        paddle.width,
-        paddle.height
-    );
-
-    ctx.fillStyle="red";
-    ctx.fillRect(
-        ai.x,
-        ai.y,
-        ai.width,
-        ai.height
-    );
-
+function drawPaddle() {
+    ctx.beginPath();
+    ctx.rect(paddle.x, canvas.height - paddle.height - 10, paddle.width, paddle.height);
+    ctx.fillStyle = "#00fff5";
+    ctx.fill();
+    ctx.closePath();
 }
 
-// Deteksi tabrakan bola dengan balok
+function drawBricks() {
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            if (bricks[c][r].status === 1) {
+                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                bricks[c][r].x = brickX;
+                bricks[c][r].y = brickY;
+                ctx.beginPath();
+                ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                ctx.fillStyle = "#f6c90e";
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+    }
+}
+
+// Logika Tabrakan
 function collisionDetection() {
-    for (let c = 0; c < colCount; c++) {
-        for (let r = 0; r < rowCount; r++) {
-
-            let b = bricks[c][r];
-
-            if (b.status == 1) {
-
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            const b = bricks[c][r];
+            if (b.status === 1) {
                 if (
                     ball.x > b.x &&
                     ball.x < b.x + brickWidth &&
                     ball.y > b.y &&
                     ball.y < b.y + brickHeight
                 ) {
-
                     ball.dy = -ball.dy;
                     b.status = 0;
-
-                    score++;
-                    scoreText.innerHTML = score;
-
-                    hitSound.play();
-
-                    // Level naik setiap 10 skor
-                    if (score % 10 == 0) {
-                        level++;
-                        levelText.innerHTML = level;
-
-                        ball.dx += (ball.dx > 0 ? 1 : -1);
-                        ball.dy += (ball.dy > 0 ? 1 : -1);
-                    }
-
-                    // Menang jika semua balok habis
-                    if (score == rowCount * colCount) {
-                        gameRunning = false;
-                        message.innerHTML = "🎉 KAMU MENANG!";
-                        winSound.play();
-                    }
+                    score += 10;
+                    scoreEl.innerText = score;
                 }
             }
         }
     }
 }
 
-// Timer
-function startTimer() {
-
-    let interval = setInterval(function () {
-
-        if (!gameRunning) {
-            clearInterval(interval);
-            return;
-        }
-
-        time--;
-        timerText.innerHTML = time;
-
-        if (time <= 0) {
-            clearInterval(interval);
-            gameOver();
-        }
-
-    }, 1000);
-
-}
-
-// Game Over
-function gameOver() {
-
-    gameRunning = false;
-
-    message.innerHTML = "💀 GAME OVER";
-
-    loseSound.play();
-
-}
-
-// Loop Game
-function draw() {
-
+// Update Pergerakan
+function update() {
     if (!gameRunning) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Gerakkan Paddle
+    paddle.x += paddle.dx;
+    if (paddle.x < 0) paddle.x = 0;
+    if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
 
-    drawBricks();
-    drawBall();
-    drawPaddle();
-
-    collisionDetection();
-
-    // Pantulan dinding kiri dan kanan
-    if (ball.x + ball.dx > canvas.width - ball.radius ||
-        ball.x + ball.dx < ball.radius) {
-        ball.dx = -ball.dx;
-    }
-
-    // Pantulan atas
-    if (ball.y + ball.dy < ball.radius) {
-        ball.dy = -ball.dy;
-    }
-
-    // Pantulan paddle player
-    else if (ball.y + ball.dy > paddle.y - ball.radius) {
-
-        if (
-            ball.x > paddle.x &&
-            ball.x < paddle.x + paddle.width
-        ) {
-            ball.dy = -ball.dy;
-        } else if (ball.y > canvas.height) {
-            gameOver();
-        }
-
-    }
-
-    // Gerak paddle player
-    if (rightPressed && paddle.x < canvas.width - paddle.width)
-        paddle.x += paddle.speed;
-
-    if (leftPressed && paddle.x > 0)
-        paddle.x -= paddle.speed;
-
-    // AI mengikuti bola
-    if (ball.x > ai.x + ai.width / 2)
-        ai.x += ai.speed;
-
-    if (ball.x < ai.x + ai.width / 2)
-        ai.x -= ai.speed;
-
-    // Bola memantul dari paddle AI
-    if (
-        ball.y <= ai.y + ai.height &&
-        ball.x > ai.x &&
-        ball.x < ai.x + ai.width
-    ) {
-        ball.dy = -ball.dy;
-    }
-
+    // Gerakkan Bola
     ball.x += ball.dx;
     ball.y += ball.dy;
 
-    requestAnimationFrame(draw);
+    // Pantulan Dinding Kiri/Kanan
+    if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+        ball.dx = -ball.dx;
+    }
 
-}
-
-// Tombol Mulai
-startBtn.onclick = function () {
-
-    score = 0;
-    level = 1;
-    time = 60;
-
-    scoreText.innerHTML = score;
-    levelText.innerHTML = level;
-    timerText.innerHTML = time;
-
-    message.innerHTML = "";
-
-    ball.x = 400;
-    ball.y = 250;
-    ball.dx = 4;
-    ball.dy = -4;
-
-    paddle.x = 340;
-    ai.x = 340;
-
-    for (let c = 0; c < colCount; c++) {
-        for (let r = 0; r < rowCount; r++) {
-            bricks[c][r].status = 1;
+    // Pantulan Atas
+    if (ball.y - ball.radius < 0) {
+        ball.dy = -ball.dy;
+    } 
+    // Pantulan Paddle / Game Over
+    else if (ball.y + ball.radius > canvas.height - paddle.height - 10) {
+        if (ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+            ball.dy = -ball.dy;
+        } else if (ball.y + ball.radius > canvas.width) {
+            alert("Game Over!");
+            gameRunning = false;
+            document.location.reload();
         }
     }
 
-    gameRunning = true;
+    collisionDetection();
+}
 
-    startTimer();
-    draw();
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBricks();
+    drawBall();
+    drawPaddle();
+    update();
 
-};
+    if (gameRunning) {
+        requestAnimationFrame(draw);
+    }
+}
+
+startBtn.addEventListener("click", () => {
+    if (!gameRunning) {
+        createBricks();
+        gameRunning = true;
+        draw();
+    }
+});
