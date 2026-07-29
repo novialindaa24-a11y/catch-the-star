@@ -1,193 +1,150 @@
-const player1 = document.getElementById("player1");
-const player2 = document.getElementById("player2");
-const enemy = document.getElementById("enemy");
-const star = document.getElementById("star");
+// ===============================
+// BRICK BREAKER - SCRIPT.JS BAGIAN 1
+// ===============================
 
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// Informasi Game
 const scoreText = document.getElementById("score");
 const levelText = document.getElementById("level");
 const timerText = document.getElementById("timer");
 const message = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 
+// Audio
+const hitSound = document.getElementById("hitSound");
+const winSound = document.getElementById("winSound");
+const loseSound = document.getElementById("loseSound");
+
+// Variabel
 let score = 0;
 let level = 1;
 let time = 60;
 let gameRunning = false;
 
-let p1x = 50;
-let p1y = 220;
+// Bola
+let ball = {
+    x: 400,
+    y: 250,
+    radius: 10,
+    dx: 4,
+    dy: -4
+};
 
-let p2x = 120;
-let p2y = 220;
+// Paddle Player
+let paddle = {
+    width: 120,
+    height: 15,
+    x: 340,
+    y: 470,
+    speed: 8
+};
 
-let enemyX = 700;
-let enemyY = 220;
+// Paddle AI
+let ai = {
+    width: 120,
+    height: 15,
+    x: 340,
+    y: 15,
+    speed: 4
+};
 
-// Posisi awal pemain
-function updatePlayers() {
-    player1.style.left = p1x + "px";
-    player1.style.top = p1y + "px";
+// Tombol keyboard
+let rightPressed = false;
+let leftPressed = false;
 
-    player2.style.left = p2x + "px";
-    player2.style.top = p2y + "px";
-}
-
-// Gerakan Player
 document.addEventListener("keydown", function(e){
-
-    if(!gameRunning) return;
-
-    // Player 1 (WASD)
-    if(e.key=="a") p1x-=10;
-    if(e.key=="d") p1x+=10;
-    if(e.key=="w") p1y-=10;
-    if(e.key=="s") p1y+=10;
-
-    // Player 2 (Arrow)
-    if(e.key=="ArrowLeft") p2x-=10;
-    if(e.key=="ArrowRight") p2x+=10;
-    if(e.key=="ArrowUp") p2y-=10;
-    if(e.key=="ArrowDown") p2y+=10;
-
-    // Batas area game
-    p1x=Math.max(0,Math.min(760,p1x));
-    p1y=Math.max(0,Math.min(460,p1y));
-
-    p2x=Math.max(0,Math.min(760,p2x));
-    p2y=Math.max(0,Math.min(460,p2y));
-
-    updatePlayers();
-
-    checkStar(player1);
-    checkStar(player2);
+    if(e.key=="ArrowRight") rightPressed=true;
+    if(e.key=="ArrowLeft") leftPressed=true;
 });
 
-// Posisi bintang acak
-function randomStar(){
+document.addEventListener("keyup", function(e){
+    if(e.key=="ArrowRight") rightPressed=false;
+    if(e.key=="ArrowLeft") leftPressed=false;
+});
 
-    let x=Math.floor(Math.random()*760);
-    let y=Math.floor(Math.random()*460);
+// Data Balok
+const rowCount = 5;
+const colCount = 8;
+const brickWidth = 80;
+const brickHeight = 20;
+const brickPadding = 10;
+const brickOffsetTop = 60;
+const brickOffsetLeft = 35;
 
-    star.style.left=x+"px";
-    star.style.top=y+"px";
-}
+let bricks = [];
 
-// Ambil bintang
-function checkStar(player){
+for(let c=0;c<colCount;c++){
+    bricks[c]=[];
 
-    let p=player.getBoundingClientRect();
-    let s=star.getBoundingClientRect();
-
-    if(
-        p.left<s.right &&
-        p.right>s.left &&
-        p.top<s.bottom &&
-        p.bottom>s.top
-    ){
-
-        score++;
-        scoreText.innerHTML=score;
-
-        randomStar();
-
-        // Naik level setiap 5 bintang
-        if(score%5==0){
-            level++;
-            levelText.innerHTML=level;
-        }
-
-        // Menang
-        if(score>=20){
-            gameRunning=false;
-            message.innerHTML="🎉 SELAMAT! KAMU MENANG!";
-        }
+    for(let r=0;r<rowCount;r++){
+        bricks[c][r]={
+            x:0,
+            y:0,
+            status:1
+        };
     }
 }
 
-// AI Musuh
-function moveEnemy(){
+// Gambar Balok
+function drawBricks(){
 
-    if(!gameRunning) return;
+    for(let c=0;c<colCount;c++){
 
-    if(enemyX<p1x) enemyX+=2;
-    if(enemyX>p1x) enemyX-=2;
+        for(let r=0;r<rowCount;r++){
 
-    if(enemyY<p1y) enemyY+=2;
-    if(enemyY>p1y) enemyY-=2;
+            if(bricks[c][r].status==1){
 
-    enemy.style.left=enemyX+"px";
-    enemy.style.top=enemyY+"px";
+                let brickX=(c*(brickWidth+brickPadding))+brickOffsetLeft;
+                let brickY=(r*(brickHeight+brickPadding))+brickOffsetTop;
 
-    let e=enemy.getBoundingClientRect();
-    let p=player1.getBoundingClientRect();
+                bricks[c][r].x=brickX;
+                bricks[c][r].y=brickY;
 
-    if(
-        e.left<p.right &&
-        e.right>p.left &&
-        e.top<p.bottom &&
-        e.bottom>p.top
-    ){
-        gameOver();
-        return;
+                ctx.fillStyle="#FFD700";
+                ctx.fillRect(
+                    brickX,
+                    brickY,
+                    brickWidth,
+                    brickHeight
+                );
+            }
+
+        }
+
     }
 
-    requestAnimationFrame(moveEnemy);
 }
 
-// Timer
-function startTimer(){
+// Gambar Bola
+function drawBall(){
 
-    let interval=setInterval(function(){
+    ctx.beginPath();
+    ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2);
+    ctx.fillStyle="white";
+    ctx.fill();
+    ctx.closePath();
 
-        if(!gameRunning){
-            clearInterval(interval);
-            return;
-        }
-
-        time--;
-        timerText.innerHTML=time;
-
-        if(time<=0){
-            clearInterval(interval);
-            gameOver();
-        }
-
-    },1000);
 }
 
-// Game Over
-function gameOver(){
+// Gambar Paddle
+function drawPaddle(){
 
-    gameRunning=false;
-    message.innerHTML="💀 GAME OVER";
+    ctx.fillStyle="cyan";
+    ctx.fillRect(
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        paddle.height
+    );
+
+    ctx.fillStyle="red";
+    ctx.fillRect(
+        ai.x,
+        ai.y,
+        ai.width,
+        ai.height
+    );
+
 }
-
-// Tombol Mulai
-startBtn.onclick=function(){
-
-    score=0;
-    level=1;
-    time=60;
-
-    scoreText.innerHTML=score;
-    levelText.innerHTML=level;
-    timerText.innerHTML=time;
-    message.innerHTML="";
-
-    p1x=50;
-    p1y=220;
-
-    p2x=120;
-    p2y=220;
-
-    enemyX=700;
-    enemyY=220;
-
-    updatePlayers();
-    randomStar();
-
-    gameRunning=true;
-
-    moveEnemy();
-    startTimer();
-};
