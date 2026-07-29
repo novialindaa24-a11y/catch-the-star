@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch The Star</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>🌟 Catch The Star 🌟</h1>
+
+    <div class="info">
+        <div>⭐ Skor : <span id="score">0</span></div>
+        <div>🎮 Level : <span id="level">1</span></div>
+        <div>⏰ Waktu : <span id="timer">60</span></div>
+    </div>
+
+    <button id="startBtn">Mulai Game</button>
+
+    <div id="gameArea">
+
+        <!-- Player 1 -->
+        <div id="player1" class="player"></div>
+
+        <!-- Player 2 -->
+        <div id="player2" class="player"></div>
+
+        <!-- Musuh -->
+        <div id="enemy"></div>
+
+        <!-- Bintang -->
+        <div id="star"></div>
+
+    </div>
+
+    <h2 id="message"></h2>
+
+    <!-- Audio -->
+    <audio id="collectSound">
+        <source src="audio/collect.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="winSound">
+        <source src="audio/win.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="gameOverSound">
+        <source src="audio/gameover.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
