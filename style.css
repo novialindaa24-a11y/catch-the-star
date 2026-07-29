@@ -20,7 +20,7 @@ body {
 }
 
 .logo-bar img {
-    height: 60px; /* Sesuaikan ukuran logo */
+    height: 40px; /* <--- PERUBAHAN DI SINI: Ukuran diperkecil dari 60px ke 40px */
     object-fit: contain;
 }
 
