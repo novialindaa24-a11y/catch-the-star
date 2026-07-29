@@ -3,35 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catch The Star</title>
+    <title>Brick Breaker</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<h1>🌟 Catch The Star 🌟</h1>
+    <h1>🧱 Brick Breaker 🧱</h1>
 
-<div class="info">
-    <p>⭐ Skor : <span id="score">0</span></p>
-    <p>🎮 Level : <span id="level">1</span></p>
-    <p>⏰ Waktu : <span id="timer">60</span></p>
-</div>
+    <div class="info">
+        <div>🏆 Skor : <span id="score">0</span></div>
+        <div>🎮 Level : <span id="level">1</span></div>
+        <div>⏰ Waktu : <span id="timer">60</span></div>
+    </div>
 
-<button id="startBtn">Mulai Game</button>
+    <button id="startBtn">Mulai Game</button>
 
-<div id="gameArea">
-    <div id="player1" class="player"></div>
-    <div id="player2" class="player"></div>
-    <div id="enemy"></div>
-    <div id="star"></div>
-</div>
+    <div id="gameContainer">
 
-<h2 id="message"></h2>
+        <!-- Canvas Game -->
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
 
-<audio id="collectSound" src="audio/collect.mp3"></audio>
-<audio id="winSound" src="audio/win.mp3"></audio>
-<audio id="gameOverSound" src="audio/gameover.mp3"></audio>
+    </div>
 
-<script src="script.js"></script>
+    <div id="message"></div>
+
+    <!-- Audio -->
+    <audio id="hitSound">
+        <source src="audio/hit.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="winSound">
+        <source src="audio/win.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="loseSound">
+        <source src="audio/lose.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="script.js"></script>
 
 </body>
 </html>
