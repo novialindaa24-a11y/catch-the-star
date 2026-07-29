@@ -118,29 +118,23 @@ function collisionDetection() {
 function update() {
     if (!gameRunning) return;
 
-    // Gerakkan Paddle
     paddle.x += paddle.dx;
     if (paddle.x < 0) paddle.x = 0;
     if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
 
-    // Gerakkan Bola
     ball.x += ball.dx;
     ball.y += ball.dy;
 
-    // Pantulan Dinding Kiri/Kanan
     if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
         ball.dx = -ball.dx;
     }
 
-    // Pantulan Atas
     if (ball.y - ball.radius < 0) {
         ball.dy = -ball.dy;
-    } 
-    // Pantulan Paddle / Game Over
-    else if (ball.y + ball.radius > canvas.height - paddle.height - 10) {
+    } else if (ball.y + ball.radius > canvas.height - paddle.height - 10) {
         if (ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
             ball.dy = -ball.dy;
-        } else if (ball.y + ball.radius > canvas.width) {
+        } else if (ball.y + ball.radius > canvas.height) {
             alert("Game Over!");
             gameRunning = false;
             document.location.reload();
