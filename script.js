@@ -148,3 +148,183 @@ function drawPaddle(){
     );
 
 }
+
+// Deteksi tabrakan bola dengan balok
+function collisionDetection() {
+    for (let c = 0; c < colCount; c++) {
+        for (let r = 0; r < rowCount; r++) {
+
+            let b = bricks[c][r];
+
+            if (b.status == 1) {
+
+                if (
+                    ball.x > b.x &&
+                    ball.x < b.x + brickWidth &&
+                    ball.y > b.y &&
+                    ball.y < b.y + brickHeight
+                ) {
+
+                    ball.dy = -ball.dy;
+                    b.status = 0;
+
+                    score++;
+                    scoreText.innerHTML = score;
+
+                    hitSound.play();
+
+                    // Level naik setiap 10 skor
+                    if (score % 10 == 0) {
+                        level++;
+                        levelText.innerHTML = level;
+
+                        ball.dx += (ball.dx > 0 ? 1 : -1);
+                        ball.dy += (ball.dy > 0 ? 1 : -1);
+                    }
+
+                    // Menang jika semua balok habis
+                    if (score == rowCount * colCount) {
+                        gameRunning = false;
+                        message.innerHTML = "🎉 KAMU MENANG!";
+                        winSound.play();
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Timer
+function startTimer() {
+
+    let interval = setInterval(function () {
+
+        if (!gameRunning) {
+            clearInterval(interval);
+            return;
+        }
+
+        time--;
+        timerText.innerHTML = time;
+
+        if (time <= 0) {
+            clearInterval(interval);
+            gameOver();
+        }
+
+    }, 1000);
+
+}
+
+// Game Over
+function gameOver() {
+
+    gameRunning = false;
+
+    message.innerHTML = "💀 GAME OVER";
+
+    loseSound.play();
+
+}
+
+// Loop Game
+function draw() {
+
+    if (!gameRunning) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawBricks();
+    drawBall();
+    drawPaddle();
+
+    collisionDetection();
+
+    // Pantulan dinding kiri dan kanan
+    if (ball.x + ball.dx > canvas.width - ball.radius ||
+        ball.x + ball.dx < ball.radius) {
+        ball.dx = -ball.dx;
+    }
+
+    // Pantulan atas
+    if (ball.y + ball.dy < ball.radius) {
+        ball.dy = -ball.dy;
+    }
+
+    // Pantulan paddle player
+    else if (ball.y + ball.dy > paddle.y - ball.radius) {
+
+        if (
+            ball.x > paddle.x &&
+            ball.x < paddle.x + paddle.width
+        ) {
+            ball.dy = -ball.dy;
+        } else if (ball.y > canvas.height) {
+            gameOver();
+        }
+
+    }
+
+    // Gerak paddle player
+    if (rightPressed && paddle.x < canvas.width - paddle.width)
+        paddle.x += paddle.speed;
+
+    if (leftPressed && paddle.x > 0)
+        paddle.x -= paddle.speed;
+
+    // AI mengikuti bola
+    if (ball.x > ai.x + ai.width / 2)
+        ai.x += ai.speed;
+
+    if (ball.x < ai.x + ai.width / 2)
+        ai.x -= ai.speed;
+
+    // Bola memantul dari paddle AI
+    if (
+        ball.y <= ai.y + ai.height &&
+        ball.x > ai.x &&
+        ball.x < ai.x + ai.width
+    ) {
+        ball.dy = -ball.dy;
+    }
+
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    requestAnimationFrame(draw);
+
+}
+
+// Tombol Mulai
+startBtn.onclick = function () {
+
+    score = 0;
+    level = 1;
+    time = 60;
+
+    scoreText.innerHTML = score;
+    levelText.innerHTML = level;
+    timerText.innerHTML = time;
+
+    message.innerHTML = "";
+
+    ball.x = 400;
+    ball.y = 250;
+    ball.dx = 4;
+    ball.dy = -4;
+
+    paddle.x = 340;
+    ai.x = 340;
+
+    for (let c = 0; c < colCount; c++) {
+        for (let r = 0; r < rowCount; r++) {
+            bricks[c][r].status = 1;
+        }
+    }
+
+    gameRunning = true;
+
+    startTimer();
+    draw();
+
+};
