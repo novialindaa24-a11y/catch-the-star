@@ -1,4 +1,3 @@
-// Ambil elemen
 const player1 = document.getElementById("player1");
 const player2 = document.getElementById("player2");
 const enemy = document.getElementById("enemy");
@@ -10,10 +9,6 @@ const timerText = document.getElementById("timer");
 const message = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 
-const collectSound = document.getElementById("collectSound");
-const winSound = document.getElementById("winSound");
-const gameOverSound = document.getElementById("gameOverSound");
-
 let score = 0;
 let level = 1;
 let time = 60;
@@ -22,13 +17,14 @@ let gameRunning = false;
 let p1x = 50;
 let p1y = 220;
 
-let p2x = 100;
+let p2x = 120;
 let p2y = 220;
 
-let enemyX = 600;
+let enemyX = 700;
 let enemyY = 220;
 
-function updatePlayer() {
+// Posisi awal pemain
+function updatePlayers() {
     player1.style.left = p1x + "px";
     player1.style.top = p1y + "px";
 
@@ -36,6 +32,7 @@ function updatePlayer() {
     player2.style.top = p2y + "px";
 }
 
+// Gerakan Player
 document.addEventListener("keydown", function(e){
 
     if(!gameRunning) return;
@@ -46,62 +43,77 @@ document.addEventListener("keydown", function(e){
     if(e.key=="w") p1y-=10;
     if(e.key=="s") p1y+=10;
 
-    // Player 2 (Panah)
+    // Player 2 (Arrow)
     if(e.key=="ArrowLeft") p2x-=10;
     if(e.key=="ArrowRight") p2x+=10;
     if(e.key=="ArrowUp") p2y-=10;
     if(e.key=="ArrowDown") p2y+=10;
 
-    updatePlayer();
+    // Batas area game
+    p1x=Math.max(0,Math.min(760,p1x));
+    p1y=Math.max(0,Math.min(460,p1y));
+
+    p2x=Math.max(0,Math.min(760,p2x));
+    p2y=Math.max(0,Math.min(460,p2y));
+
+    updatePlayers();
 
     checkStar(player1);
     checkStar(player2);
 });
 
+// Posisi bintang acak
 function randomStar(){
-    star.style.left=Math.floor(Math.random()*650)+"px";
-    star.style.top=Math.floor(Math.random()*450)+"px";
+
+    let x=Math.floor(Math.random()*760);
+    let y=Math.floor(Math.random()*460);
+
+    star.style.left=x+"px";
+    star.style.top=y+"px";
 }
 
+// Ambil bintang
 function checkStar(player){
 
     let p=player.getBoundingClientRect();
     let s=star.getBoundingClientRect();
 
-    if(!(p.right<s.left ||
-         p.left>s.right ||
-         p.bottom<s.top ||
-         p.top>s.bottom)){
+    if(
+        p.left<s.right &&
+        p.right>s.left &&
+        p.top<s.bottom &&
+        p.bottom>s.top
+    ){
 
         score++;
         scoreText.innerHTML=score;
 
-        collectSound.play();
-
         randomStar();
 
+        // Naik level setiap 5 bintang
         if(score%5==0){
             level++;
             levelText.innerHTML=level;
         }
 
+        // Menang
         if(score>=20){
-            winSound.play();
-            message.innerHTML="🎉 Kamu Menang!";
             gameRunning=false;
+            message.innerHTML="🎉 SELAMAT! KAMU MENANG!";
         }
     }
 }
 
+// AI Musuh
 function moveEnemy(){
 
     if(!gameRunning) return;
 
-    if(enemyX>p1x) enemyX-=2;
     if(enemyX<p1x) enemyX+=2;
+    if(enemyX>p1x) enemyX-=2;
 
-    if(enemyY>p1y) enemyY-=2;
     if(enemyY<p1y) enemyY+=2;
+    if(enemyY>p1y) enemyY-=2;
 
     enemy.style.left=enemyX+"px";
     enemy.style.top=enemyY+"px";
@@ -109,17 +121,20 @@ function moveEnemy(){
     let e=enemy.getBoundingClientRect();
     let p=player1.getBoundingClientRect();
 
-    if(!(e.right<p.left ||
-         e.left>p.right ||
-         e.bottom<p.top ||
-         e.top>p.bottom)){
-
+    if(
+        e.left<p.right &&
+        e.right>p.left &&
+        e.top<p.bottom &&
+        e.bottom>p.top
+    ){
         gameOver();
+        return;
     }
 
     requestAnimationFrame(moveEnemy);
 }
 
+// Timer
 function startTimer(){
 
     let interval=setInterval(function(){
@@ -140,15 +155,14 @@ function startTimer(){
     },1000);
 }
 
+// Game Over
 function gameOver(){
 
     gameRunning=false;
-
-    gameOverSound.play();
-
-    message.innerHTML="💀 Game Over";
+    message.innerHTML="💀 GAME OVER";
 }
 
+// Tombol Mulai
 startBtn.onclick=function(){
 
     score=0;
@@ -158,12 +172,22 @@ startBtn.onclick=function(){
     scoreText.innerHTML=score;
     levelText.innerHTML=level;
     timerText.innerHTML=time;
-
     message.innerHTML="";
+
+    p1x=50;
+    p1y=220;
+
+    p2x=120;
+    p2y=220;
+
+    enemyX=700;
+    enemyY=220;
+
+    updatePlayers();
+    randomStar();
 
     gameRunning=true;
 
-    randomStar();
     moveEnemy();
     startTimer();
-}
+};
